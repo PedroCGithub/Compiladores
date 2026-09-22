@@ -33,14 +33,14 @@
  *     código. Precisa ser `OpRelAtributo op_code;`.
  * ==========================================================================*/
 typedef struct {
-    //TokenNome type; // nome ddo token
+    TokenNome type; // nome ddo token
     int line;   // tratamento ddde erro
 
     union {
         int table_index; //indice tabela dde simbolo
         int int_value; //valor literal convertido
         double float_value; //valor literal floar conmvertido
-        //OpRelType op_code; //operador relacional especifico
+        OpRelAtributo op_code; //operador relacional especifico
     } attribute;
 } Token;
 
@@ -113,16 +113,20 @@ const char *palavrasFixas[] = {
     "algoritmo", "var", "inicio", "fimalgoritmo",
     "caractere", "inteiro", "real", "logico",
     "verdadeiro", "falso",
-    "leia", "escreva", "escreval"
-    "se", "entao", "senao", "fimse"
+    "leia", "escreva", "escreval",
+    "se", "entao", "senao", "fimse",
     "para", "de", "ate", "passo", "faca", "fimpara",
     "enquanto", "fimenquanto",
     "vetor",
     "procedimento", "fimprocedimento",
-    "funcao", "fimfuncao", "retorne"
-    "MOD", "E", "OU",
+    "funcao", "fimfuncao", "retorne",
+    "MOD", "E", "OU"
+};
+
+const char *simbolos[] = {
     "<-", "+", "-", "*", "/", "(", ")", "[", "]", ":", ",", ".."
 };
+
 /* ============================================================================
  * ERRO: `sizeof(palavrasFixas) / sizeof(char)`
  * ----------------------------------------------------------------------------
@@ -135,7 +139,7 @@ const char *palavrasFixas[] = {
  * array, ou seja, `sizeof(palavrasFixas[0])` (o tamanho de um
  * `const char *`), não `sizeof(char)`.
  * ==========================================================================*/
-#define qtd_fixos (sizeof(palavrasFixas)/sizeof(char))
+#define qtd_fixos (sizeof(palavrasFixas)/sizeof(palavrasFixas[0]))
 
 /* ============================================================================
  * TODO 4 - Implementar a função obterToken() do módulo Analisador Léxico
@@ -167,7 +171,36 @@ const char *palavrasFixas[] = {
  *     num buffer (com `fopen` + `fseek`/`ftell` para saber o tamanho,
  *     ou `malloc` + `fread`), em vez de processar linha por linha.
  * ==========================================================================*/
+Token obterToken(char *buffer, int *pos, int *linha){
+    Token tk;
+    memset(&tk, 0, sizeof(Token));
 
+     // 5.1) pular espaços em branco e comentários
+     for (;;) {
+        while (buffer[*pos] == ' ' || buffer[*pos] == '\t' || buffer[*pos] == '\r') {
+            (*pos)++;
+        }
+        if (buffer[*pos] == '\n') {
+            (*pos)++;
+            (*linha)++;
+            continue;
+        }
+        if (buffer[*pos] == '/' && buffer[*pos + 1] == '/') {
+            while (buffer[*pos] != '\n' && buffer[*pos] != '\0') (*pos)++;
+            continue; // volta ao topo do loop para tratar a quebra de linha
+        }
+        break; // achou algo que não é espaço nem comentário
+    }
+     // 5.2) fim de arquivo
+     // 5.3) identificador ou palavra reservada: começa com letra ou '_'
+     // 5.4) número: inteiro (42) ou real (3.14)
+     // 5.5) string entre aspas: pode conter espaços, por isso não usamos
+    // a estratégia "separado por espaço" aqui dentro
+     // 5.6) operadores relacionais: <, <=, =, <>, >, >=
+     // 5.7) intervalo de vetor ".."
+     // 5.8) demais símbolos de um único caractere: + - * / \ ( ) [ ] : ,
+     // 5.9) nada reconheceu esse caractere -> ERRO LÉXICO
+}
 
 
 int ehPontuacao(char c) {
