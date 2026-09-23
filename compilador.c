@@ -3,12 +3,15 @@
 //  Etapa 2 (Analisador Lexico) + Etapa 3 (Analisador Sintatico)
 //
 //  Integrantes:
-//    - NOME COMPLETO 1 - RA
-//    - NOME COMPLETO 2 - RA
-//    - NOME COMPLETO 3 - RA
+//    - Henrique Ferreira Marciano - RA 10439797
+//    - Pedro Casas Pequeno Junior - RA 10437031
+//    - Pedro Gabriel Guimarães Fernandes - RA 10437465
+
+//
+//   Professora as explicacoes da gramatica e das decisoes de projeto estao no arquivo readme.txt.
 //
 //  Compilar: gcc -Wall -Wno-unused-result -g -Og compilador.c -o compilador
-//  Executar: compilador programa.txt
+//  Executar: ./compilador programa.txt
 // ====================================================================
 
 #include <stdio.h>
@@ -39,8 +42,7 @@ const char *nomesTokens[] = {
     "KEYWORD", "STRING", "SIMBOLO"
 };
 
-// Acrescentamos OP_NE (o operador "<>") -- ver explicacao mais abaixo,
-// em classificarLexema(), sobre um bug pequeno que isso corrige.
+// OP_NE = operador "<>" (ver README, secao 4.5, sobre o bug corrigido)
 typedef enum {
     OP_LT, // <
     OP_LE, // <=
@@ -88,7 +90,7 @@ const char *simbolos[] = {
 #define QTD_SIMBOLOS (sizeof(simbolos) / sizeof(simbolos[0]))
 
 // ====================================================================
-// Funcoes do analisador lexico (etapa 2 -- praticamente sem mudancas)
+// Funcoes do analisador lexico (Etapa 2)
 // ====================================================================
 void iniciarAnalisador(FILE *arquivo);
 int fimDoArquivo();
@@ -118,122 +120,11 @@ char tabelaSimbolos[MAX_SIMBOLOS][TAM_LEXEMA];
 int  qtdSimbolos = 0;
 
 // ====================================================================
-// ETAPA 3 - Analisador Sintatico Descendente Recursivo Preditivo
-// ====================================================================
-//
-// Ideia basica, pra quem esta vendo isso pela primeira vez:
-//
-// Um analisador sintatico "descendente recursivo" e, na pratica, uma
-// funcao em C para CADA simbolo nao-terminal da gramatica. Por
-// exemplo, se a gramatica tem a regra
-//
-//     comando_se -> 'se' '(' expressao ')' 'entao' lista_comandos 'fimse'
-//
-// entao criamos uma funcao parseComandoSe() que:
-//   1) confere se o token atual e mesmo 'se' e consome ele,
-//   2) confere se e '(' e consome,
-//   3) CHAMA a funcao parseExpressao() pra tratar a parte "expressao"
-//      (e por isso que se chama "recursivo": uma funcao de parsing
-//      chama outra),
-//   4) e assim por diante.
-//
-// Se em algum passo o token nao for o esperado, e porque o codigo
-// fonte tem um erro de sintaxe -> chamamos erroSintatico() e paramos.
-//
-// "Preditivo" quer dizer que a gente NUNCA precisa voltar atras ou
-// tentar mais de uma opcao: só de olhar o token atual (1 unico
-// simbolo de lookahead -> por isso "LL(1)") ja da pra saber qual
-// producao da gramatica aplicar. Pra isso funcionar, a gramatica
-// precisa ser:
-//   - nao ambigua
-//   - fatorada a esquerda (nao pode ter duas producoes do mesmo
-//     nao-terminal comecando com o mesmo token)
-//   - sem recursao a esquerda (uma producao "A -> A + B" trava um
-//     parser recursivo em loop infinito)
-//
-// A gramatica que usamos abaixo ja nasce assim, seguindo o mesmo
-// truque mostrado no slide da disciplina para eliminar recursao a
-// esquerda em expressoes aritmeticas (E -> T E', E' -> + T E' | eps):
-// em vez de criar um nao-terminal extra so pra isso, usamos um laco
-// "while" -- da exatamente no mesmo resultado, mas fica mais direto
-// de ler em C.
-//
-// Como o parser conversa com o lexico (o "nextToken()" do enunciado):
-//
-//   - Existe uma variavel global tokenAtual: e o "1 token de
-//     lookahead" que o parser sempre enxerga.
-//   - A funcao avancar() faz o papel do nextToken(): ela pede o
-//     proximo token pro lexico (chamando obterToken(), a mesma
-//     funcao da etapa 2) e guarda em tokenAtual. De quebra, ja
-//     imprime o token, entao a etapa 2 continua funcionando
-//     normalmente -- so que agora quem manda buscar cada token e o
-//     proprio parser, token por token, em vez de um loop separado.
-//
-// Gramatica usada (ja fatorada e sem recursao a esquerda). Essa
-// gramatica foi construida a partir dos exemplos do anexo do
-// enunciado (ANEXO I), cobrindo: algoritmo, declaracao de variaveis,
-// vetores, procedimentos, funcoes, se/senao, para, enquanto, leia,
-// escreva/escreval, atribuicao, chamada de procedimento/funcao e
-// expressoes aritmeticas/relacionais/logicas.
-//
-//   programa           -> 'algoritmo' cadeia lista_subprogramas
-//                          secao_var 'inicio' lista_comandos 'fimalgoritmo'
-//
-//   lista_subprogramas -> (procedimento | funcao)*
-//   procedimento       -> 'procedimento' id parametros_opc
-//                          'inicio' lista_comandos 'fimprocedimento'
-//   funcao             -> 'funcao' id parametros_opc ':' tipo
-//                          'inicio' lista_comandos 'fimfuncao'
-//   parametros_opc     -> ( '(' lista_parametros? ')' )?
-//   lista_parametros   -> parametro (',' parametro)*
-//   parametro          -> id ':' tipo
-//
-//   secao_var          -> ( 'var' lista_declaracoes )?
-//   lista_declaracoes  -> declaracao*
-//   declaracao         -> lista_ids ':' tipo
-//   lista_ids          -> id (',' id)*
-//   tipo               -> 'inteiro' | 'real' | 'caractere' | 'logico'
-//                        | 'vetor' '[' num '..' num ']' 'de' tipo
-//
-//   lista_comandos     -> comando*
-//   comando            -> atrib_ou_chamada | comando_se | comando_para
-//                        | comando_enquanto | comando_leia
-//                        | comando_escreva | comando_retorne
-//
-//   atrib_ou_chamada   -> id ( '[' expressao ']' )? ( '<-' expressao
-//                        | '(' lista_args? ')' )?
-//   comando_se         -> 'se' '(' expressao ')' 'entao' lista_comandos
-//                          ( 'senao' lista_comandos )? 'fimse'
-//   comando_para       -> 'para' id 'de' expressao 'ate' expressao
-//                          ( 'passo' expressao )? 'faca'
-//                          lista_comandos 'fimpara'
-//   comando_enquanto   -> 'enquanto' '(' expressao ')' 'faca'
-//                          lista_comandos 'fimenquanto'
-//   comando_leia       -> 'leia' '(' idx_ou_id (',' idx_ou_id)* ')'
-//   comando_escreva    -> ('escreva'|'escreval') '(' lista_expressoes? ')'
-//   comando_retorne    -> 'retorne' expressao
-//
-//   expressao   -> expr_e ('OU' expr_e)*
-//   expr_e      -> expr_rel ('E' expr_rel)*
-//   expr_rel    -> expr_arit (relop expr_arit)?
-//   expr_arit   -> termo (('+' | '-') termo)*
-//   termo       -> fator (('*' | '/' | '\' | 'MOD') fator)*
-//   fator       -> '(' expressao ')'
-//                | '-' fator
-//                | id ('[' expressao ']' | '(' lista_args? ')')?
-//                | num_int | num_real | cadeia | 'verdadeiro' | 'falso'
-//
-// Obs: o projeto (PROJETO_1) so exige: (1) reconhecer se a cadeia de
-// tokens pertence a linguagem, e (2) emitir "ERRO SINTATICO" com o
-// token e a linha quando nao pertencer. Nao pedimos pra montar arvore
-// de derivacao aqui -- cada funcao de parsing so PRECISA consumir os
-// tokens corretos; se conseguir chegar ate o fim sem cair em nenhum
-// erroSintatico(), o programa e sintaticamente valido.
-//
+// Funcoes do analisador sintatico (Etapa 3)
+// Uma funcao por nao-terminal da gramatica (ver README, secao 3).
 // ====================================================================
 
-// tokenAtual = o token que o parser esta "olhando" agora (lookahead)
-Token tokenAtual;
+Token tokenAtual; // token atual (lookahead), usado por todo o parser
 
 void avancar(void);
 int tokenEh(const char *lexema);
@@ -242,7 +133,6 @@ void casarTipo(TokenNome tipoEsperado, const char *descricao);
 int inicioDeComando(void);
 noreturn void erroSintatico(char *tokenEncontrado, char *motivo);
 
-// uma funcao para cada nao-terminal da gramatica acima
 void parsePrograma(void);
 void parseListaSubprogramas(void);
 void parseSubprograma(void);
@@ -293,17 +183,9 @@ int main(int argc, char *argv[])
 
     iniciarAnalisador(fonte);
 
-    // avancar() busca o 1o token do arquivo (e ja imprime, como pede
-    // a etapa 2). A partir daqui, quem chama avancar() de novo e o
-    // proprio parser, sempre que "casa" (consome) um token.
-    avancar();
-
+    avancar(); // pega o primeiro token (nextToken)
     parsePrograma();
 
-    // Se sobrou algo depois do 'fimalgoritmo' (ex: lixo no arquivo,
-    // ou um segundo "algoritmo"), isso tambem e erro sintatico: o
-    // programa deveria ter acabado exatamente aqui (tokenAtual deve
-    // ser TOKEN_EOF).
     if (tokenAtual.type != TOKEN_EOF) {
         erroSintatico(tokenAtual.lexema, "codigo inesperado depois de 'fimalgoritmo'");
     }
@@ -315,8 +197,7 @@ int main(int argc, char *argv[])
 }
 
 // ====================================================================
-// Analisador lexico (etapa 2) -- igual ao original, so com o ajuste
-// comentado em classificarLexema()
+// Analisador lexico (Etapa 2)
 // ====================================================================
 void iniciarAnalisador(FILE *arquivo)
 {
@@ -456,13 +337,7 @@ TokenNome classificarLexema(char *lexema)
             return TOKEN_KEYWORD;
     }
 
-    // Acrescentamos "<>" aqui embaixo. Detalhe: o lexico (em
-    // obterToken, la em cima) ja SABIA ler "<>" como um unico lexema
-    // de 2 caracteres, mas essa funcao classificarLexema nao tinha
-    // "<>" nessa lista de comparacao -- entao ele caia no "return
-    // TOKEN_ID" la no final e virava, por engano, um identificador
-    // chamado "<>". Isso quebrava qualquer expressao tipo
-    // nome <> "Joao" (que aparece no proprio anexo do enunciado).
+    // "<>" incluido aqui -- bug corrigido, ver README secao 4.5
     if (strcmp(lexema, "<") == 0 || strcmp(lexema, "<=") == 0 ||
         strcmp(lexema, "=") == 0 || strcmp(lexema, ">") == 0 ||
         strcmp(lexema, ">=") == 0 || strcmp(lexema, "<>") == 0)
@@ -619,31 +494,23 @@ void fecharAnalisador()
 }
 
 // ====================================================================
-// ETAPA 3 - Implementacao do parser
+// Analisador sintatico (Etapa 3)
 // ====================================================================
 
-// avancar() e o "nextToken()" do enunciado: pede o proximo token pro
-// lexico e ja imprime ele (isso mantem o requisito da etapa 2 de
-// mostrar cada token reconhecido).
+// nextToken(): pede o proximo token ao lexico e ja o imprime (Etapa 2)
 void avancar(void)
 {
     tokenAtual = obterToken();
     imprimirToken(tokenAtual);
 }
 
-// Compara o token atual com um texto fixo. Serve pra palavras
-// reservadas e simbolos, que sempre tem o mesmo lexema (ex: "se",
-// "(", "<-"). NAO serve pra identificador/numero/cadeia, porque o
-// texto deles muda a cada vez (o proximo id pode ser "x", "idade",
-// etc) -- pra esses casos usamos casarTipo() em vez de casar().
+// compara o lexema atual com um texto fixo (palavras reservadas e simbolos)
 int tokenEh(const char *lexema)
 {
     return strcmp(tokenAtual.lexema, lexema) == 0;
 }
 
-// "Casar" um token = conferir que ele e o que a gramatica esperava
-// naquele ponto e, se for, consumir (avancar para o proximo). Se nao
-// for, a cadeia de tokens NAO segue a gramatica -> erro sintatico.
+// confere e consome um token pelo lexema; se nao bater, erro sintatico
 void casar(const char *lexemaEsperado)
 {
     if (tokenEh(lexemaEsperado)) {
@@ -653,8 +520,7 @@ void casar(const char *lexemaEsperado)
     }
 }
 
-// Mesma ideia de casar(), mas conferindo o TIPO do token (TOKEN_ID,
-// TOKEN_NUM_INT, TOKEN_STRING...) em vez do lexema exato.
+// igual a casar(), mas conferindo o TIPO do token (id, numero, cadeia...)
 void casarTipo(TokenNome tipoEsperado, const char *descricao)
 {
     if (tokenAtual.type == tipoEsperado) {
@@ -664,10 +530,7 @@ void casarTipo(TokenNome tipoEsperado, const char *descricao)
     }
 }
 
-// FIRST(comando): a lista de tokens que podem ser o PRIMEIRO token de
-// algum comando. Usamos isso em lista_comandos para saber quando
-// parar de ler comandos (quando o token atual nao inicia nenhum
-// comando, normalmente e porque chegamos num "fim..." ou "senao").
+// FIRST(comando): tokens que podem iniciar um comando
 int inicioDeComando(void)
 {
     return tokenAtual.type == TOKEN_ID ||
@@ -676,9 +539,6 @@ int inicioDeComando(void)
            tokenEh("retorne");
 }
 
-// Mensagem de erro no formato pedido pelo enunciado: linha + token +
-// motivo. exit(0) porque o enunciado desconta ponto se o programa nao
-// terminar com retorno 0.
 noreturn void erroSintatico(char *tokenEncontrado, char *motivo)
 {
     printf("ERRO SINTATICO | linha %d | token '%s' | motivo: %s\n", tokenAtual.line, tokenEncontrado, motivo);
@@ -687,12 +547,8 @@ noreturn void erroSintatico(char *tokenEncontrado, char *motivo)
     exit(0);
 }
 
-// -----------------------------------------------------------------
-// programa / subprogramas / declaracoes de variaveis
-// -----------------------------------------------------------------
+// -- programa / subprogramas / declaracoes -----------------------------
 
-// Ponto de entrada da gramatica inteira. Todo programa MiniVisualg
-// comeca com 'algoritmo "nome"' e termina com 'fimalgoritmo'.
 void parsePrograma(void)
 {
     casar("algoritmo");
@@ -704,10 +560,6 @@ void parsePrograma(void)
     casar("fimalgoritmo");
 }
 
-// Um programa pode ter zero ou mais procedimentos/funcoes declarados
-// antes da secao "var" (foi assim nos exemplos do anexo, como em
-// "RotinasComRetorno"). Por isso usamos um "while": enquanto o token
-// atual for 'procedimento' ou 'funcao', continuamos lendo mais um.
 void parseListaSubprogramas(void)
 {
     while (tokenEh("procedimento") || tokenEh("funcao")) {
@@ -734,8 +586,6 @@ void parseProcedimento(void)
     casar("fimprocedimento");
 }
 
-// Funcao e igual a procedimento, so que declara o tipo de retorno
-// depois do ":" (ex: "funcao somar(...): inteiro").
 void parseFuncao(void)
 {
     casar("funcao");
@@ -748,11 +598,7 @@ void parseFuncao(void)
     casar("fimfuncao");
 }
 
-// Os parenteses de parametros so aparecem SE houver parametros. O
-// proprio arquivo original ja tinha essa observacao em comentario:
-// procedimento sem parametro nao usa parenteses nem na declaracao nem
-// na chamada (ex: "linha_decorativa" no anexo). Por isso o '(' aqui e
-// opcional.
+// parenteses so aparecem se houver parametros (ver README secao 3.4)
 void parseParametrosOpc(void)
 {
     if (tokenEh("(")) {
@@ -780,8 +626,6 @@ void parseParametro(void)
     parseTipo();
 }
 
-// A secao "var" e opcional (um algoritmo pode nao declarar nenhuma
-// variavel, como no exemplo "PrimeiroPasso" do anexo).
 void parseSecaoVar(void)
 {
     if (tokenEh("var")) {
@@ -790,11 +634,6 @@ void parseSecaoVar(void)
     }
 }
 
-// Zero ou mais declaracoes. Uma declaracao sempre comeca com um
-// identificador (o nome da variavel), entao usamos isso como
-// condicao de parada do laço: assim que o token atual deixar de ser
-// TOKEN_ID, significa que acabaram as declaracoes (o proximo deve
-// ser 'inicio').
 void parseListaDeclaracoes(void)
 {
     while (tokenAtual.type == TOKEN_ID) {
@@ -802,7 +641,6 @@ void parseListaDeclaracoes(void)
     }
 }
 
-// Ex: "n1, n2: inteiro"
 void parseDeclaracao(void)
 {
     parseListaIds();
@@ -819,7 +657,6 @@ void parseListaIds(void)
     }
 }
 
-// tipo -> inteiro | real | caractere | logico | vetor[n..n] de tipo
 void parseTipo(void)
 {
     if (tokenEh("inteiro") || tokenEh("real") || tokenEh("caractere") || tokenEh("logico")) {
@@ -833,19 +670,15 @@ void parseTipo(void)
         casarTipo(TOKEN_NUM_INT, "esperado numero inteiro (limite superior do vetor)");
         casar("]");
         casar("de");
-        parseTipo(); // "vetor de X" -- X pode ser qualquer tipo base
+        parseTipo();
     }
     else {
         erroSintatico(tokenAtual.lexema, "esperado um tipo (inteiro, real, caractere, logico ou vetor)");
     }
 }
 
-// -----------------------------------------------------------------
-// comandos
-// -----------------------------------------------------------------
+// -- comandos -----------------------------------------------------------
 
-// Zero ou mais comandos seguidos, ate aparecer um token que nao inicia
-// comando nenhum (tipicamente um "fim..." ou "senao").
 void parseListaComandos(void)
 {
     while (inicioDeComando()) {
@@ -853,8 +686,6 @@ void parseListaComandos(void)
     }
 }
 
-// Aqui e onde o parser "escolhe" qual regra da gramatica aplicar,
-// olhando so o token atual -- essa e a parte "preditiva" do LL(1).
 void parseComando(void)
 {
     if (tokenAtual.type == TOKEN_ID) {
@@ -883,17 +714,8 @@ void parseComando(void)
     }
 }
 
-// Esse e o unico lugar onde precisamos "espiar mais um pouco" depois
-// de consumir o identificador, pra saber qual das 4 formas e:
-//
-//   x <- expressao            -> atribuicao simples
-//   x[i] <- expressao         -> atribuicao numa posicao de vetor
-//   f(a, b)                   -> chamada de procedimento/funcao com args
-//   procedimento_sem_param    -> chamada sem parenteses nenhum
-//
-// Repara que continua sendo so 1 token de lookahead por vez (o que
-// vem logo depois do ID) -- entao a gramatica continua LL(1), so
-// ficou com 4 "finais" possiveis pra mesma regra.
+// depois do id, o proximo token decide entre atribuicao (simples ou
+// em vetor) e chamada (com ou sem argumentos) -- ver README secao 4.4
 void parseAtribuicaoOuChamada(void)
 {
     casarTipo(TOKEN_ID, "esperado identificador");
@@ -919,9 +741,7 @@ void parseAtribuicaoOuChamada(void)
         }
         casar(")");
     }
-    // Se nao caiu em nenhum "if" acima, e chamada de procedimento sem
-    // parametro (ex: "linha_decorativa") -- nao ha mais nada pra
-    // consumir, entao simplesmente nao fazemos nada aqui.
+    // nenhum dos dois: chamada de procedimento sem parametros
 }
 
 void parseComandoSe(void)
@@ -1015,23 +835,9 @@ void parseComandoRetorne(void)
     parseExpressao();
 }
 
-// -----------------------------------------------------------------
-// expressoes
-// -----------------------------------------------------------------
-//
-// Essa parte segue a mesma logica do slide da disciplina pra tirar a
-// recursao a esquerda (E -> T E', E' -> + T E' | eps). Em vez de
-// criar um nao-terminal extra so pra "empilhar mais um +T", usamos um
-// "while": funciona exatamente igual, mas evita ficar criando
-// nao-terminais artificiais (tipo E', T') so pra satisfazer a regra
-// de "sem recursao a esquerda".
-//
-// A ordem das funcoes abaixo (expressao -> expr_e -> expr_rel ->
-// expr_arit -> termo -> fator) e o que define a PRECEDENCIA dos
-// operadores: quem esta "mais embaixo" na cadeia de chamadas (fator)
-// e calculado primeiro, entao * e / tem mais precedencia que + e -,
-// que por sua vez tem mais precedencia que os relacionais (<, =...),
-// que tem mais precedencia que E, que tem mais precedencia que OU.
+// -- expressoes -----------------------------------------------------------
+// precedencia (menor pra maior): OU < E < relacional < + - < * / \ MOD
+// (ver README secao 4.3)
 
 void parseExpressao(void)
 {
@@ -1051,9 +857,7 @@ void parseExprE(void)
     }
 }
 
-// So pode existir NO MAXIMO um operador relacional por expressao (a
-// linguagem nao permite "a < b < c"), por isso aqui usamos "if" e nao
-// "while" como nas outras regras de expressao.
+// "if" e nao "while": no maximo um operador relacional por expressao
 void parseExprRel(void)
 {
     parseExprArit();
@@ -1081,10 +885,6 @@ void parseTermo(void)
     }
 }
 
-// fator e o "nivel mais baixo" da expressao: um valor sozinho, uma
-// expressao entre parenteses, um numero negativo, um identificador
-// (que pode ser variavel, posicao de vetor ou chamada de funcao),
-// numero, cadeia ou verdadeiro/falso.
 void parseFator(void)
 {
     if (tokenEh("(")) {
@@ -1094,7 +894,7 @@ void parseFator(void)
     }
     else if (tokenEh("-")) {
         casar("-");
-        parseFator(); // permite "- - x", nao so "-x"
+        parseFator(); // permite "- - x"
     }
     else if (tokenAtual.type == TOKEN_ID) {
         casarTipo(TOKEN_ID, "esperado identificador");
