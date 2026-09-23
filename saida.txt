@@ -1,45 +1,52 @@
-1# estou
-1# de
-1# saco
-1# cheio
-1# desse
-1# trabalho
-2# café
-2# com
-2# sal
-2# ,
-2# pao
-2# com
-2# açucar
-2# e
-2# manga
-2# com
-2# mantega
-2# (
-2# !
-2# estranho
-2# )
-3# foda-se
-3# o
-3# Jamilson
-3# fdp
-3# nunca
-3# achei
-3# confiavel
-4# Monark
-4# fecha
-4# com
-4# Israel
-4# (
-4# Manda
-4# muita
-4# criança
-4# jogando
-4# minecraft
-4# pra
-4# lá
-4# )
-4# e
-4# tem
-4# kitnet
-4# la
+1# ID | 0 (estou)
+1# KEYWORD | de
+1# ID | 1 (saco)
+1# ID | 2 (cheio)
+1# ID | 3 (desse)
+1# ID | 4 (trabalho)
+2# ID | 5 (cafe)
+2# ID | 6 (com)
+2# ID | 7 (sal)
+2# SIMBOLO | ,
+2# ID | 8 (pao)
+2# ID | 6 (com)
+2# ID | 9 (acucar)
+2# ID | 10 (e)
+2# ID | 11 (manga)
+2# ID | 6 (com)
+2# ID | 12 (mantega)
+2# SIMBOLO | (
+2# ID | 13 (estranho)
+2# SIMBOLO | )
+3# ID | 14 (foda)
+3# SIMBOLO | -
+3# KEYWORD | se
+3# ID | 15 (o)
+3# ID | 16 (Jamilson)
+3# ID | 17 (fdp)
+3# ID | 18 (nunca)
+3# ID | 19 (achei)
+3# ID | 20 (confiavel)
+4# ID | 21 (Monark)
+4# ID | 22 (fecha)
+4# ID | 6 (com)
+4# ID | 23 (Israel)
+4# SIMBOLO | (
+4# ID | 24 (Manda)
+4# ID | 25 (muita)
+4# ID | 26 (crianca)
+4# ID | 27 (jogando)
+4# ID | 28 (minecraft)
+4# ID | 29 (pra)
+4# ID | 30 (la)
+4# SIMBOLO | )
+4# ID | 10 (e)
+4# ID | 31 (tem)
+4# ID | 32 (kitnet)
+4# ID | 30 (la)
+5# ID | 33 (teste)
+5# OP_REL | OP_LT
+5# OP_REL | OP_GT
+5# SIMBOLO | -
+5# SIMBOLO | ,
+ERRO LÉXICO | linha 5 | sequência '.' | ponto sozinho (esperado ..)

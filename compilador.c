@@ -532,3 +532,42 @@ void fecharAnalisador()
 // TODO - Etapa 3: analisador sintatico
 // TODO - readme.txt
 // ====================================================================
+
+// até onde eu entendi, tem que passar as nossas expressões para funções, então vai ter no minimo isso
+// link que eu usei para entender isso: https://github.com/lotabout/write-a-C-interpreter/blob/master/tutorial/pt-br/4-Top-down-Parsing.md
+// aproveita e guarda isso para colocar no relatorio
+// mudei o teste pq n tava rodando na minha maquina com os acentos e ç não sei o pq
+/*
+expressao   -> expr_e (OU expr_e)*
+expr_e      -> expr_rel (E expr_rel)*
+expr_rel    -> expr_arit (relop expr_arit)?
+expr_arit   -> termo (('+' | '-') termo)*
+termo       -> fator (('*' | '/' | '\' | MOD) fator)*
+fator       -> '(' expressao ')'
+             | '-' fator
+             | id ('[' expressao ']' | '(' (expressao (',' expressao)*)? ')')?
+             | num_int | num_real | cadeia | verdadeiro | falso
+*/
+// coloquei etapa 3 no nome só para diferenciar se tiver outra com esse nome
+void etapa3_expressao(void) {}
+void etapa3_expr_e(void) {}
+void etapa3_expr_rel(void) {}
+void etapa3_expr_arit(void) {}
+void etapa3_termo(void) {}
+void etapa3_fator(void) {}
+
+// adaptei o erro lexico para o sintatico
+void erroSintatico(char *esperado, char *motivo) {
+    printf("ERRO SINTÁTICO | linha %d | token '%s' | motivo: %s\n", linhaAtual, esperado, motivo);
+    fprintf(saida, "ERRO SINTÁTICO | linha %d | token '%s' | motivo: %s\n", linhaAtual, esperado, motivo);
+    fecharAnalisador(); // acho que aqui continua isso, não precisa mudar
+    exit(0);
+}
+
+// função para verificar se o proximo token é oq queremos, exemplo: se rodar proxTokenEh("+") ele vai retornar true se o proximo token for + ou false se não for
+bool proxTokenEh(char *lexema) {
+    if (strcmp(tokenAtual.lexema, lexema) == 0) {
+        return true;
+    }
+    return false;
+}
