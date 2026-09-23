@@ -1,52 +1,31 @@
-1# ID | 0 (estou)
-1# KEYWORD | de
-1# ID | 1 (saco)
-1# ID | 2 (cheio)
-1# ID | 3 (desse)
-1# ID | 4 (trabalho)
-2# ID | 5 (cafe)
-2# ID | 6 (com)
-2# ID | 7 (sal)
-2# SIMBOLO | ,
-2# ID | 8 (pao)
-2# ID | 6 (com)
-2# ID | 9 (acucar)
-2# ID | 10 (e)
-2# ID | 11 (manga)
-2# ID | 6 (com)
-2# ID | 12 (mantega)
-2# SIMBOLO | (
-2# ID | 13 (estranho)
-2# SIMBOLO | )
-3# ID | 14 (foda)
-3# SIMBOLO | -
-3# KEYWORD | se
-3# ID | 15 (o)
-3# ID | 16 (Jamilson)
-3# ID | 17 (fdp)
-3# ID | 18 (nunca)
-3# ID | 19 (achei)
-3# ID | 20 (confiavel)
-4# ID | 21 (Monark)
-4# ID | 22 (fecha)
-4# ID | 6 (com)
-4# ID | 23 (Israel)
-4# SIMBOLO | (
-4# ID | 24 (Manda)
-4# ID | 25 (muita)
-4# ID | 26 (crianca)
-4# ID | 27 (jogando)
-4# ID | 28 (minecraft)
-4# ID | 29 (pra)
-4# ID | 30 (la)
-4# SIMBOLO | )
-4# ID | 10 (e)
-4# ID | 31 (tem)
-4# ID | 32 (kitnet)
-4# ID | 30 (la)
-5# ID | 33 (teste)
-5# OP_REL | OP_LT
-5# OP_REL | OP_GT
-5# SIMBOLO | -
-5# SIMBOLO | ,
-ERRO LÉXICO | linha 5 | sequência '.' | ponto sozinho (esperado ..)
+1# KEYWORD | algoritmo
+1# STRING | "ContadorManual"
+2# KEYWORD | var
+3# ID | 0 (contador)
+3# SIMBOLO | :
+3# KEYWORD | inteiro
+4# KEYWORD | inicio
+5# ID | 0 (contador)
+5# SIMBOLO | <-
+5# NUM_INT | 1
+6# KEYWORD | enquanto
+6# SIMBOLO | (
+6# ID | 0 (contador)
+6# OP_REL | OP_LE
+6# NUM_INT | 5
+6# SIMBOLO | )
+6# KEYWORD | faca
+7# KEYWORD | escreval
+7# SIMBOLO | (
+7# STRING | "Valor atual: "
+7# SIMBOLO | ,
+7# ID | 0 (contador)
+7# SIMBOLO | )
+8# ID | 0 (contador)
+8# SIMBOLO | <-
+8# ID | 0 (contador)
+8# SIMBOLO | +
+8# NUM_INT | 1
+9# KEYWORD | fimenquanto
+10# KEYWORD | fimalgoritmo
+10# EOF | EOF
