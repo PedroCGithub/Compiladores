@@ -1,18 +1,12 @@
-// ====================================================================
 //  COMPILADORES - PROJETO Fase 1 - MiniVisualg
 //  Etapa 2 (Analisador Lexico) + Etapa 3 (Analisador Sintatico)
-//
 //  Integrantes:
 //    - Henrique Ferreira Marciano - RA 10439797
 //    - Pedro Casas Pequeno Junior - RA 10437031
 //    - Pedro Gabriel Guimarães Fernandes - RA 10437465
-
-//
 //   Professora as explicacoes da gramatica e das decisoes de projeto estao no arquivo readme.txt.
-//
 //  Compilar: gcc -Wall -Wno-unused-result -g -Og compilador.c -o compilador
 //  Executar: ./compilador programa.txt
-// ====================================================================
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -22,10 +16,7 @@
 #define TAM_LEXEMA 256
 #define MAX_SIMBOLOS 500
 
-// ====================================================================
 // Definicao de tipos
-// ====================================================================
-
 typedef enum {
     TOKEN_EOF = 0,
     TOKEN_ID,
@@ -89,9 +80,7 @@ const char *simbolos[] = {
 };
 #define QTD_SIMBOLOS (sizeof(simbolos) / sizeof(simbolos[0]))
 
-// ====================================================================
 // Funcoes do analisador lexico (Etapa 2)
-// ====================================================================
 void iniciarAnalisador(FILE *arquivo);
 int fimDoArquivo();
 Token obterToken();
@@ -110,19 +99,16 @@ void guardar(Token *token, int *i, int c);
 int inserirSimbolo(char *nome);
 noreturn void erroLexico(char *sequencia, char *motivo);
 
-// ====================================================================
 // Variaveis globais
-// ====================================================================
 FILE *fonte;
 int linhaAtual = 1;
 FILE *saida = NULL;
 char tabelaSimbolos[MAX_SIMBOLOS][TAM_LEXEMA];
 int  qtdSimbolos = 0;
 
-// ====================================================================
+
 // Funcoes do analisador sintatico (Etapa 3)
 // Uma funcao por nao-terminal da gramatica (ver README, secao 3).
-// ====================================================================
 
 Token tokenAtual; // token atual (lookahead), usado por todo o parser
 
@@ -162,9 +148,7 @@ void parseExprArit(void);
 void parseTermo(void);
 void parseFator(void);
 
-// ====================================================================
 // main
-// ====================================================================
 int main(int argc, char *argv[])
 {
 
@@ -193,9 +177,7 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-// ====================================================================
 // Analisador lexico (Etapa 2)
-// ====================================================================
 void iniciarAnalisador(FILE *arquivo)
 {
     fonte = arquivo;
@@ -490,9 +472,7 @@ void fecharAnalisador()
     fclose(saida);
 }
 
-// ====================================================================
 // Analisador sintatico (Etapa 3)
-// ====================================================================
 
 // nextToken(): pede o proximo token ao lexico e ja o imprime (Etapa 2)
 void avancar(void)
@@ -544,7 +524,7 @@ noreturn void erroSintatico(char *tokenEncontrado, char *motivo)
     exit(0);
 }
 
-// -- programa / subprogramas / declaracoes -----------------------------
+//  programa / subprogramas / declaracoes
 
 void parsePrograma(void)
 {
@@ -674,7 +654,7 @@ void parseTipo(void)
     }
 }
 
-// -- comandos -----------------------------------------------------------
+//comandos
 
 void parseListaComandos(void)
 {
@@ -712,7 +692,7 @@ void parseComando(void)
 }
 
 // depois do id, o proximo token decide entre atribuicao (simples ou
-// em vetor) e chamada (com ou sem argumentos) -- ver README secao 4.4
+// em vetor) e chamada (com ou sem argumentos) ver README secao 4.4
 void parseAtribuicaoOuChamada(void)
 {
     casarTipo(TOKEN_ID, "esperado identificador");
@@ -832,7 +812,7 @@ void parseComandoRetorne(void)
     parseExpressao();
 }
 
-// -- expressoes -----------------------------------------------------------
+// expressoes
 // precedencia (menor pra maior): OU < E < relacional < + - < * / \ MOD
 // (ver README secao 4.3)
 
