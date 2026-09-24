@@ -167,9 +167,6 @@ void parseFator(void);
 // ====================================================================
 int main(int argc, char *argv[])
 {
-#ifdef _WIN32
-    system("chcp 65001 > nul");
-#endif
 
     if (argc < 2) {
         printf("Uso: compilador <arquivo_fonte>\n");
