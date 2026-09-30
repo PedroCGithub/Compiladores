@@ -7,5 +7,4 @@ enquanto (contador <= 5) faca
 escreval("Valor atual: ", contador)
 contador <- contador + 1
 fimenquanto
-Flamengo
 fimalgoritmo

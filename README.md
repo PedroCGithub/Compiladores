@@ -1,7 +1,7 @@
-====================================================================
+
 COMPILADORES - PROJETO Fase 1 - MiniVisualg
 README - Etapas 1, 2 e 3
-====================================================================
+
 
 Integrantes:
   - Henrique Ferreira Marciano - RA 10439797
@@ -9,9 +9,7 @@ Integrantes:
   - Pedro Gabriel Guimarães Fernandes - RA 10437465
 
 
---------------------------------------------------------------------
 1. COMO COMPILAR E EXECUTAR
---------------------------------------------------------------------
 
 Compilar:
     gcc -Wall -Wno-unused-result -g -Og compilador.c -o compilador
@@ -33,9 +31,9 @@ Saida gerada:
       exit(0).
 
 
---------------------------------------------------------------------
+
 2. O QUE FOI IMPLEMENTADO
---------------------------------------------------------------------
+
 
 Etapa#1 - Gramatica livre de contexto: concluida (ver secao 3).
 Etapa#2 - Analisador lexico: concluido.
@@ -50,15 +48,15 @@ o sintatico pede o proximo token, exatamente como no diagrama do
 enunciado (analisador lexico <-> analisador sintatico).
 
 
---------------------------------------------------------------------
+
 3. GRAMATICA UTILIZADA (Etapa#1)
---------------------------------------------------------------------
+
 
 Esta e a mesma gramatica entregue na Etapa#1, usada sem alteracoes
 como base do parser da Etapa#3.
 
 3.1 Tokens (expressoes regulares)
-----------------------------------
+
 id          -> [a-zA-Z][a-zA-Z0-9_]*
 num_int     -> [0-9]+
 num_real    -> [0-9]+\.[0-9]+
@@ -84,12 +82,12 @@ operador unario (fator -> '-' fator), evitando ambiguidade entre
 subtracao (a - 3.5) e literal negativo (-3.5).
 
 3.2 Estrutura geral do programa
---------------------------------
+
 programa    -> algoritmo cadeia declaracao* inicio comando* fimalgoritmo
 declaracao  -> decl_var | decl_proc | decl_func
 
 3.3 Declaracao de variaveis
-----------------------------
+E
 decl_var   -> var decl_lista+
 decl_lista -> id_lista ':' tipo
 id_lista   -> id (',' id)*
@@ -97,7 +95,7 @@ tipo       -> tipo_base | vetor '[' num_int '..' num_int ']' de tipo_base
 tipo_base  -> inteiro | real | caractere | logico
 
 3.4 Procedimentos e funcoes
------------------------------
+
 decl_proc  -> procedimento id ('(' parametros ')')? inicio comando* fimprocedimento
 decl_func  -> funcao id '(' parametros? ')' ':' tipo_base inicio comando* fimfuncao
 parametros -> parametro (',' parametro)*
@@ -107,7 +105,7 @@ Procedimentos sem parametro nao usam parenteses -- nem na
 declaracao, nem na chamada (ex: "linha_decorativa" no Anexo I).
 
 3.5 Comandos
---------------
+
 comando  -> atribuicao | leitura | escrita | condicional
           | repeticao_para | repeticao_enquanto | chamada | retorno
 
@@ -122,7 +120,7 @@ chamada           -> id ('(' (expressao (',' expressao)*)? ')')?
 retorno           -> retorne expressao
 
 3.6 Expressoes
-----------------
+
 Precedencia (do menor para o maior): OU < E < relacional < + - < * / \ MOD < unario
 
 expressao -> expr_e (OU expr_e)*
@@ -144,12 +142,12 @@ descendente recursivo na Etapa#3 -- cada nao-terminal vira
 diretamente uma funcao parse_X() em C.
 
 
---------------------------------------------------------------------
+
 4. IMPLEMENTACAO DO PARSER (Etapa#3)
---------------------------------------------------------------------
+O
 
 4.1 Por que analisador descendente recursivo preditivo
-----------------------------------------------------------
+
 Cada nao-terminal da gramatica da secao 3 virou uma funcao em C
 (parsePrograma, parseComandoSe, parseExpressao, etc). Cada funcao:
   1) confere se o token atual e o esperado naquele ponto da regra
@@ -174,7 +172,7 @@ producao aplicar. Isso so funciona porque a gramatica da secao 3 e:
   - sem recursao a esquerda.
 
 4.2 Integracao entre lexico e sintatico (nextToken / obterToken)
----------------------------------------------------------------------
+
 Existe uma variavel global tokenAtual, que e o "1 token de
 lookahead" que o parser sempre enxerga. A funcao avancar() faz o
 papel do nextToken() citado no enunciado: ela chama obterToken()
@@ -185,7 +183,7 @@ buscar cada token e o proprio parser, token por token, no momento em
 que precisa dele.
 
 4.3 Eliminacao de recursao a esquerda nas expressoes (uso de "while")
----------------------------------------------------------------------
+
 A gramatica de expressoes ja vem sem recursao a esquerda (secao
 3.6), no formato "expr_arit -> termo (('+'|'-') termo)*". Na
 implementacao, cada "(...)*" da gramatica virou um laco "while" na
@@ -209,7 +207,7 @@ permite no maximo um operador relacional por expressao (nao existe
 "a < b < c" na linguagem).
 
 4.4 O caso "id" no inicio de um comando (atribuicao vs. chamada)
----------------------------------------------------------------------
+
 A regra "chamada -> id (...)?" e a regra "atribuicao -> variavel
 '<-' expressao" comecam com o mesmo token (id). Para decidir qual
 das duas se aplica sem violar o LL(1), a funcao
@@ -222,7 +220,7 @@ finais possiveis:
     nome_do_procedimento    -> chamada sem parametros (sem parenteses)
 
 4.5 Bug corrigido no analisador lexico
-------------------------------------------
+
 O operador "<>" (usado por exemplo em nome <> "Joao", presente no
 Anexo I do enunciado) ja era lido corretamente pelo analisador
 lexico como um unico lexema de 2 caracteres (a logica de
@@ -234,7 +232,7 @@ a comparacao de operadores relacionais e um novo atributo (OP_NE)
 foi criado no enum OpRelAtributo.
 
 4.6 Formato da mensagem de erro sintatico
-----------------------------------------------
+
 Seguindo o exigido no enunciado, toda vez que um token nao bate com
 o que a gramatica esperava, e impressa a mensagem:
     ERRO SINTATICO | linha <numero> | token '<lexema>' | motivo: <descricao>
@@ -243,23 +241,8 @@ exit(0) (o proprio enunciado pede retorno 0 mesmo em caso de erro,
 para nao ser descontado por warning/retorno diferente de 0).
 
 
---------------------------------------------------------------------
-5. LIMITACOES CONHECIDAS
---------------------------------------------------------------------
+5. TESTES REALIZADOS
 
-- O parser verifica apenas a SINTAXE (se a cadeia de tokens segue a
-  gramatica). Nao ha analise semantica: nao se verifica, por
-  exemplo, se uma variavel foi declarada antes de usada, se os tipos
-  de uma atribuicao sao compativeis, ou se a quantidade de
-  argumentos de uma chamada bate com os parametros declarados.
-- Nao e gerada arvore de derivacao (nao foi exigido pelo enunciado
-  da Etapa#3, apenas reconhecer a cadeia e emitir erro sintatico
-  quando necessario).
-
-
---------------------------------------------------------------------
-6. TESTES REALIZADOS
---------------------------------------------------------------------
 
 Foram testados manualmente, entre outros:
 - Varios exemplos do Anexo I do enunciado (variaveis, comentarios,

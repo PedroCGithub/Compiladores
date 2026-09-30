@@ -26,7 +26,7 @@
 8# ID | 0 (contador)
 8# SIMBOLO | +
 8# NUM_INT | 1
+8# ID | 1 (Flamigo)
 9# KEYWORD | fimenquanto
-10# ID | 1 (Flamengo)
-11# KEYWORD | fimalgoritmo
-11# EOF | EOF
+10# KEYWORD | fimalgoritmo
+10# EOF | EOF
