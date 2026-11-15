@@ -254,3 +254,125 @@ Foram testados manualmente, entre outros:
 - Um programa usando o operador "<>", confirmando que o bug descrito
   em 4.5 foi corrigido (o operador e classificado como OP_REL /
   OP_NE, nao como identificador).
+
+
+
+6. FASE 2 - ANALISE SEMANTICA E GERACAO DE CODIGO (MEPA)
+
+
+Esta secao registra tudo o que foi alterado no compilador da Fase 1
+para a Fase 2: o que mudou, onde mudou no codigo e por que. Cada
+mudanca recebe um numero (6.x) para poder ser citada nos comentarios
+do codigo-fonte, do mesmo jeito que a secao 4.5 e citada hoje.
+
+Compilacao exigida pelo enunciado da Fase 2:
+    gcc -g -Og -Wall compilador.c -o compilador
+
+6.1 Decisao de projeto: tabela de simbolos
+
+O enunciado da Fase 2 pede uma minitabela de simbolos em lista
+encadeada (struct TNo). Com autorizacao da professora (conversa em
+[DATA]), o grupo NAO usou a TNo: a tabela de simbolos ja existente
+desde a Fase 1 (a matriz tabelaSimbolos[][], preenchida pelo
+analisador lexico) foi mantida como tabela unica e estendida com
+vetores paralelos, indexados pela mesma posicao do identificador.
+
+Por que: o analisador lexico ja insere cada identificador na matriz
+e devolve a posicao dele em token.attribute.table_index. Usar essa
+mesma posicao no parser evita manter duas tabelas com o mesmo nome
+e evita mexer na estrutura do token, que o enunciado pede para
+manter igual a da Fase 1.
+
+Como a matriz recebe TODO identificador que aparece no texto (inclusive
+os nao declarados), "estar na tabela" nao significa "estar
+declarado". Por isso existe a flag declarada[] (ver 6.2).
+
+6.2 Registro das mudancas
+
+(Cada mudanca segue o modelo abaixo. Preencher a medida que o
+trabalho avanca.)
+
+6.2.N <titulo curto da mudanca>
+    O que mudou: ...
+    Onde:        funcao(oes) / trecho do compilador.c
+    Por que:     ...
+
+6.2.1 Tabela de simbolos estendida e funcoes do semantico
+    O que mudou: criados os enums Categoria (CAT_VAR, CAT_VETOR,
+                 CAT_PARAM, CAT_PROC, CAT_FUNC) e TipoBase (T_INT,
+                 T_REAL, T_CHAR, T_LOG, T_NENHUM); criados os vetores
+                 paralelos a tabelaSimbolos[] (declarada, categoria,
+                 tipoBase, endereco, atribuida, usada, limInf,
+                 limSup, qtdParams, tipoParam) e as globais
+                 proxEndereco e rotinaAtual; criadas as funcoes
+                 declarar(), busca_tabela_simbolos(),
+                 proximo_rotulo() e erroSemantico().
+    Onde:        definicoes de tipos e variaveis globais no inicio do
+                 compilador.c; erroSemantico() logo depois de
+                 erroLexico(); as demais funcoes no fim do arquivo,
+                 no bloco "Analisador semantico (Fase 2)".
+    Por que:     a matriz da Fase 1 so guarda o nome. Os vetores
+                 paralelos guardam, na mesma posicao i, tudo o que o
+                 semantico precisa saber sobre o nome tabelaSimbolos[i]
+                 (ver 6.1). declarar() e o unico ponto que registra
+                 uma declaracao e ja barra nomes repetidos;
+                 busca_tabela_simbolos() e proximo_rotulo() seguem o
+                 que o enunciado recomenda; erroSemantico() segue o
+                 mesmo formato de mensagem dos erros lexico e
+                 sintatico e encerra com exit(0). Nesta etapa o parser
+                 ainda nao chama nenhuma dessas funcoes, entao o
+                 comportamento do compilador nao muda.
+
+6.2.2 Declaracao de variaveis na tabela de simbolos
+    O que mudou: parseListaIds() passou a declarar cada nome assim que
+                 o le (com tipo provisorio T_NENHUM) e a devolver os
+                 indices em ids[]; parseDeclaracao() completa o tipo,
+                 a categoria (CAT_VAR ou CAT_VETOR), os limites do
+                 vetor e os enderecos depois de ler o tipo; parseTipo()
+                 passou a devolver o TipoBase e os limites do vetor, e
+                 foi criada parseTipoBase() para os tipos simples;
+                 parseListaDeclaracoes() passou a entrar tambem quando
+                 o nome e uma palavra reservada (exceto "inicio").
+    Onde:        parseListaDeclaracoes(), parseDeclaracao(),
+                 parseListaIds(), parseTipo(), parseTipoBase() (nova);
+                 parseFuncao() e parseParametro() passaram a chamar
+                 parseTipoBase().
+    Por que:     na linguagem os nomes vem antes do tipo
+                 ("a, b : inteiro"), entao o tipo so e conhecido no fim
+                 da linha. Declarar cada nome no momento em que e lido
+                 faz o erro de nome repetido apontar a linha certa.
+                 Cada vetor ocupa (limSup - limInf + 1) posicoes, entao
+                 os enderecos sao recalculados depois de conhecer o
+                 tipo. O laco de parseListaDeclaracoes() precisou
+                 aceitar palavras reservadas para que "inteiro: real"
+                 gere ERRO SEMANTICO (exigido no enunciado) em vez de
+                 ERRO SINTATICO. Funcoes e parametros so aceitam tipo
+                 base (gramatica, secao 3.4), por isso usam
+                 parseTipoBase(); pelo mesmo motivo "vetor de vetor"
+                 passou a ser erro sintatico, como ja dizia a gramatica
+                 da secao 3.3.
+    Erros semanticos novos: identificador declarado mais de uma vez;
+                 palavra reservada usada como nome de variavel; vetor
+                 com limite inferior maior que o superior.
+
+6.3 Regras semanticas adotadas
+
+(Preencher: regras de compatibilidade de tipos, tratamento de
+vetores, escopo dos parametros de procedimentos e funcoes.)
+
+6.4 Geracao de codigo MEPA
+
+(Preencher: nome do arquivo gerado, padroes MEPA usados para cada
+comando, maquina virtual usada nos testes.)
+
+6.5 Testes da Fase 2
+
+(Preencher: programas de teste usados e o resultado esperado de
+cada um, incluindo um teste para cada erro semantico.)
+
+6.6 Uso de Inteligencia Artificial
+
+Conforme exigido no enunciado, o grupo declara que utilizou o
+assistente Claude (Anthropic) como apoio na Fase 2, para orientar o
+planejamento das etapas, indicar os pontos do codigo a alterar e
+revisar trechos implementados pelo grupo.

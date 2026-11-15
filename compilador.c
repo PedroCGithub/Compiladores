@@ -15,6 +15,7 @@
 
 #define TAM_LEXEMA 256
 #define MAX_SIMBOLOS 500
+#define MAX_PARAMS 8
 
 // Definicao de tipos
 typedef enum {
@@ -27,6 +28,23 @@ typedef enum {
     TOKEN_STRING,
     TOKEN_SIMBOLO
 } TokenNome;
+
+typedef enum { 
+    CAT_VAR,
+    CAT_VETOR,
+    CAT_PARAM,
+    CAT_PROC,
+    CAT_FUNC 
+} Categoria;
+
+typedef enum {
+    T_INT,
+    T_REAL,
+    T_CHAR,
+    T_LOG,
+    T_NENHUM
+} TipoBase;
+
 
 const char *nomesTokens[] = {
     "EOF", "ID", "NUM_INT", "NUM_FLOAT", "OP_REL",
@@ -88,6 +106,8 @@ TokenNome classificarLexema(char *lexema);
 void imprimirToken(Token token);
 void fecharAnalisador();
 
+
+
 int ehDelimitador(int c);
 int ehOperador(int c);
 int ehLetra(int c);
@@ -106,6 +126,32 @@ FILE *saida = NULL;
 char tabelaSimbolos[MAX_SIMBOLOS][TAM_LEXEMA];
 int  qtdSimbolos = 0;
 
+// Tabela de simbolos estendida (Fase 2) - ver README 6.1
+// a posicao i de cada vetor descreve o identificador tabelaSimbolos[i]
+int       declarada[MAX_SIMBOLOS];
+Categoria categoria[MAX_SIMBOLOS];
+TipoBase  tipoBase[MAX_SIMBOLOS];
+int       endereco[MAX_SIMBOLOS];
+int       atribuida[MAX_SIMBOLOS];
+int       usada[MAX_SIMBOLOS];
+int       limInf[MAX_SIMBOLOS];
+int       limSup[MAX_SIMBOLOS];
+int       qtdParams[MAX_SIMBOLOS];
+TipoBase  tipoParam[MAX_SIMBOLOS][MAX_PARAMS];
+
+int proxEndereco = 0;   
+int rotinaAtual = -1;
+int paramsRotina[MAX_PARAMS];
+
+void declarar(int idx, Categoria cat, TipoBase tipo);
+int proximo_rotulo(void);
+noreturn void erroSemantico(char *identificador, char *motivo);
+int busca_tabela_simbolos(char *id);
+void usarComoVariavel(int idx, int temIndice, int linha);
+void usarComoRotina(int idx, int linha);
+void iniciarRotina(int idx, Categoria cat);
+void encerrarRotina(int enderecoAntes);
+noreturn void erroSemanticoNaLinha(int linha, char *identificador, char *motivo);
 
 // Funcoes do analisador sintatico (Etapa 3)
 // Uma funcao por nao-terminal da gramatica (ver README, secao 3).
@@ -130,8 +176,9 @@ void parseParametro(void);
 void parseSecaoVar(void);
 void parseListaDeclaracoes(void);
 void parseDeclaracao(void);
-void parseListaIds(void);
-void parseTipo(void);
+void parseListaIds(int ids[], int *qtdIds);
+TipoBase parseTipo(int *ehVetor, int *limiteInf, int *limiteSup);
+TipoBase parseTipoBase(void);
 void parseListaComandos(void);
 void parseComando(void);
 void parseAtribuicaoOuChamada(void);
@@ -139,6 +186,7 @@ void parseComandoSe(void);
 void parseComandoPara(void);
 void parseComandoEnquanto(void);
 void parseComandoLeia(void);
+void parseVariavelLeia(void);
 void parseComandoEscreva(void);
 void parseComandoRetorne(void);
 void parseExpressao(void);
@@ -466,6 +514,24 @@ noreturn void erroLexico(char *sequencia, char *motivo)
     exit(0);
 }
 
+// Erro semantico na linha do token atual.
+noreturn void erroSemantico(char *sequencia, char *motivo)
+{
+    erroSemanticoNaLinha(tokenAtual.line, sequencia, motivo);
+}
+
+// Erro semantico numa linha informada. Usada quando o erro so e
+// percebido depois de o parser ja ter avancado para o proximo token
+// (ex.: "x <- v" com v vetor: o erro e da linha do v). Mostra a
+// mensagem na tela e no arquivo de saida e encerra com exit(0).
+noreturn void erroSemanticoNaLinha(int linha, char *sequencia, char *motivo)
+{
+    printf("ERRO SEMANTICO | linha %d | sequencia '%s' | %s\n", linha, sequencia, motivo);
+    fprintf(saida, "ERRO SEMANTICO | linha %d | sequencia '%s' | %s\n", linha, sequencia, motivo);
+    fecharAnalisador();
+    exit(0);
+}
+
 void fecharAnalisador()
 {
     fclose(fonte);
@@ -555,24 +621,36 @@ void parseSubprograma(void)
 
 void parseProcedimento(void)
 {
+    int idx;
+    int enderecoAntes = proxEndereco;
+
     casar("procedimento");
+    idx = tokenAtual.attribute.table_index;  // ler antes de consumir
     casarTipo(TOKEN_ID, "esperado o nome do procedimento");
+    iniciarRotina(idx, CAT_PROC);            // antes do corpo: permite recursao
     parseParametrosOpc();
     casar("inicio");
     parseListaComandos();
     casar("fimprocedimento");
+    encerrarRotina(enderecoAntes);
 }
 
 void parseFuncao(void)
 {
+    int idx;
+    int enderecoAntes = proxEndereco;
+
     casar("funcao");
+    idx = tokenAtual.attribute.table_index;  // ler antes de consumir
     casarTipo(TOKEN_ID, "esperado o nome da funcao");
+    iniciarRotina(idx, CAT_FUNC);            // antes do corpo: permite recursao
     parseParametrosOpc();
     casar(":");
-    parseTipo();
+    tipoBase[idx] = parseTipoBase();         // tipo de retorno da funcao
     casar("inicio");
     parseListaComandos();
     casar("fimfuncao");
+    encerrarRotina(enderecoAntes);
 }
 
 // parenteses so aparecem se houver parametros (ver README secao 3.4)
@@ -596,11 +674,27 @@ void parseListaParametros(void)
     }
 }
 
+// Declara o parametro (CAT_PARAM) e registra seu tipo na assinatura
+// da rotina em analise (qtdParams / tipoParam), usada no passo 5.
 void parseParametro(void)
 {
+    int idx;
+    int n = qtdParams[rotinaAtual];
+
+    if (tokenAtual.type == TOKEN_KEYWORD) {
+        erroSemantico(tokenAtual.lexema, "palavra reservada nao pode ser usada como nome de parametro");
+    }
+    if (n >= MAX_PARAMS) {
+        erroSemantico(tabelaSimbolos[rotinaAtual], "rotina com parametros demais");
+    }
+    idx = tokenAtual.attribute.table_index;  // ler antes de consumir
     casarTipo(TOKEN_ID, "esperado nome de parametro");
     casar(":");
-    parseTipo();
+    declarar(idx, CAT_PARAM, parseTipoBase());
+
+    paramsRotina[n] = idx;
+    tipoParam[rotinaAtual][n] = tipoBase[idx];
+    qtdParams[rotinaAtual] = n + 1;
 }
 
 void parseSecaoVar(void)
@@ -611,47 +705,123 @@ void parseSecaoVar(void)
     }
 }
 
+
+
+// Declaracoes da secao var.
+// O laco tambem entra quando o nome e uma palavra reservada (exceto
+// "inicio", que fecha a secao), para que parseListaIds() possa
+// acusar o erro semantico em vez de um erro sintatico (README 6.2.2).
 void parseListaDeclaracoes(void)
 {
-    while (tokenAtual.type == TOKEN_ID) {
+    while (tokenAtual.type == TOKEN_ID ||
+           (tokenAtual.type == TOKEN_KEYWORD && !tokenEh("inicio"))) {
         parseDeclaracao();
     }
 }
 
+// decl_lista -> id_lista ':' tipo
+// parseListaIds() ja registra cada nome na tabela (para acusar nome
+// repetido na linha certa). Como o tipo so aparece depois do ':',
+// aqui completamos o tipo e os enderecos de cada nome da lista.
 void parseDeclaracao(void)
 {
-    parseListaIds();
+    int ids[MAX_SIMBOLOS];             // indices (tabelaSimbolos) dos nomes
+    int qtdIds = 0;
+    int enderecoInicial = proxEndereco;
+    int ehVetor = 0;
+    int limiteInf = 0;
+    int limiteSup = 0;
+    int tamanho;                       // posicoes de memoria por nome
+    TipoBase tipo;
+    int i;
+
+    parseListaIds(ids, &qtdIds);
     casar(":");
-    parseTipo();
+    tipo = parseTipo(&ehVetor, &limiteInf, &limiteSup);
+
+    tamanho = ehVetor ? (limiteSup - limiteInf + 1) : 1;
+
+    for (i = 0; i < qtdIds; i++) {
+        tipoBase[ids[i]] = tipo;
+        endereco[ids[i]] = enderecoInicial + i * tamanho;
+        if (ehVetor) {
+            categoria[ids[i]] = CAT_VETOR;
+            limInf[ids[i]] = limiteInf;
+            limSup[ids[i]] = limiteSup;
+        }
+    }
+    proxEndereco = enderecoInicial + qtdIds * tamanho;
 }
 
-void parseListaIds(void)
+// id_lista -> id (',' id)*
+// Cada nome e declarado assim que e lido (tipo ainda desconhecido,
+// T_NENHUM), e seu indice e guardado em ids[] para parseDeclaracao()
+// completar o tipo. O indice tem que ser lido ANTES de casarTipo(),
+// porque avancar() troca o tokenAtual.
+void parseListaIds(int ids[], int *qtdIds)
 {
-    casarTipo(TOKEN_ID, "esperado identificador");
-    while (tokenEh(",")) {
-        casar(",");
+    int idx;
+
+    *qtdIds = 0;
+    do {
+        if (*qtdIds > 0) {
+            casar(",");
+        }
+        if (tokenAtual.type == TOKEN_KEYWORD) {
+            erroSemantico(tokenAtual.lexema, "palavra reservada nao pode ser usada como nome de variavel");
+        }
+        idx = tokenAtual.attribute.table_index;
+        if (tokenAtual.type == TOKEN_ID) {
+            declarar(idx, CAT_VAR, T_NENHUM);  // erro se o nome ja existe
+        }
         casarTipo(TOKEN_ID, "esperado identificador");
-    }
+        ids[*qtdIds] = idx;
+        (*qtdIds)++;
+    } while (tokenEh(","));
 }
 
-void parseTipo(void)
+// tipo -> tipo_base | vetor '[' num_int '..' num_int ']' de tipo_base
+// Devolve o tipo base. Se for vetor, *ehVetor = 1 e os limites saem
+// em *limiteInf e *limiteSup.
+TipoBase parseTipo(int *ehVetor, int *limiteInf, int *limiteSup)
 {
-    if (tokenEh("inteiro") || tokenEh("real") || tokenEh("caractere") || tokenEh("logico")) {
-        avancar();
-    }
-    else if (tokenEh("vetor")) {
+    *ehVetor = 0;
+
+    if (tokenEh("vetor")) {
         casar("vetor");
         casar("[");
+        *limiteInf = tokenAtual.attribute.int_value;  // ler antes de consumir
         casarTipo(TOKEN_NUM_INT, "esperado numero inteiro (limite inferior do vetor)");
         casar("..");
+        *limiteSup = tokenAtual.attribute.int_value;
         casarTipo(TOKEN_NUM_INT, "esperado numero inteiro (limite superior do vetor)");
         casar("]");
         casar("de");
-        parseTipo();
+
+        if (*limiteInf > *limiteSup) {
+            erroSemantico("vetor", "limite inferior maior que o limite superior");
+        }
+        *ehVetor = 1;
     }
+
+    return parseTipoBase();
+}
+
+// tipo_base -> inteiro | real | caractere | logico
+TipoBase parseTipoBase(void)
+{
+    TipoBase tipo = T_NENHUM;
+
+    if (tokenEh("inteiro"))        tipo = T_INT;
+    else if (tokenEh("real"))      tipo = T_REAL;
+    else if (tokenEh("caractere")) tipo = T_CHAR;
+    else if (tokenEh("logico"))    tipo = T_LOG;
     else {
-        erroSintatico(tokenAtual.lexema, "esperado um tipo (inteiro, real, caractere, logico ou vetor)");
+        erroSintatico(tokenAtual.lexema, "esperado um tipo (inteiro, real, caractere ou logico)");
     }
+
+    avancar();
+    return tipo;
 }
 
 //comandos
@@ -662,6 +832,7 @@ void parseListaComandos(void)
         parseComando();
     }
 }
+
 
 void parseComando(void)
 {
@@ -695,19 +866,30 @@ void parseComando(void)
 // em vetor) e chamada (com ou sem argumentos) ver README secao 4.4
 void parseAtribuicaoOuChamada(void)
 {
+    int idx = tokenAtual.attribute.table_index;  // ler antes de consumir
+    int linha = tokenAtual.line;
+    int temIndice = 0;
+
     casarTipo(TOKEN_ID, "esperado identificador");
 
     if (tokenEh("[")) {
         casar("[");
         parseExpressao();
         casar("]");
+        temIndice = 1;
     }
 
     if (tokenEh("<-")) {
+        usarComoVariavel(idx, temIndice, linha);
+        atribuida[idx] = 1;
         casar("<-");
         parseExpressao();
     }
+    else if (temIndice) {
+        erroSintatico(tokenAtual.lexema, "esperado '<-' depois do indice do vetor");
+    }
     else if (tokenEh("(")) {
+        usarComoRotina(idx, linha);
         casar("(");
         if (!tokenEh(")")) {
             parseExpressao();
@@ -718,7 +900,10 @@ void parseAtribuicaoOuChamada(void)
         }
         casar(")");
     }
-    // nenhum dos dois: chamada de procedimento sem parametros
+    else {
+        // nenhum dos dois: chamada de procedimento sem parametros
+        usarComoRotina(idx, linha);
+    }
 }
 
 void parseComandoSe(void)
@@ -738,8 +923,16 @@ void parseComandoSe(void)
 
 void parseComandoPara(void)
 {
+    int idx;
+    int linha;
+
     casar("para");
+    idx = tokenAtual.attribute.table_index;  // ler antes de consumir
+    linha = tokenAtual.line;
     casarTipo(TOKEN_ID, "esperado identificador da variavel de controle");
+    usarComoVariavel(idx, 0, linha);
+    atribuida[idx] = 1;  // o para atribui valores a variavel de controle
+    usada[idx] = 1;      // e tambem a le a cada volta
     casar("de");
     parseExpressao();
     casar("ate");
@@ -768,24 +961,31 @@ void parseComandoLeia(void)
 {
     casar("leia");
     casar("(");
+    parseVariavelLeia();
+    while (tokenEh(",")) {
+        casar(",");
+        parseVariavelLeia();
+    }
+    casar(")");
+}
+
+// Uma variavel dentro do leia(...): simples ou posicao de vetor.
+// Precisa estar declarada, e passa a contar como atribuida.
+void parseVariavelLeia(void)
+{
+    int idx = tokenAtual.attribute.table_index;  // ler antes de consumir
+    int linha = tokenAtual.line;
+    int temIndice = 0;
 
     casarTipo(TOKEN_ID, "esperado identificador");
     if (tokenEh("[")) {
         casar("[");
         parseExpressao();
         casar("]");
+        temIndice = 1;
     }
-    while (tokenEh(",")) {
-        casar(",");
-        casarTipo(TOKEN_ID, "esperado identificador");
-        if (tokenEh("[")) {
-            casar("[");
-            parseExpressao();
-            casar("]");
-        }
-    }
-
-    casar(")");
+    usarComoVariavel(idx, temIndice, linha);
+    atribuida[idx] = 1;
 }
 
 void parseComandoEscreva(void)
@@ -874,13 +1074,22 @@ void parseFator(void)
         parseFator(); // permite "- - x"
     }
     else if (tokenAtual.type == TOKEN_ID) {
+        int idx = tokenAtual.attribute.table_index;  // ler antes de consumir
+        int linha = tokenAtual.line;
+
         casarTipo(TOKEN_ID, "esperado identificador");
         if (tokenEh("[")) {
+            usarComoVariavel(idx, 1, linha);
+            usada[idx] = 1;
             casar("[");
             parseExpressao();
             casar("]");
         }
         else if (tokenEh("(")) {
+            usarComoRotina(idx, linha);
+            if (categoria[idx] == CAT_PROC) {
+                erroSemanticoNaLinha(linha, tabelaSimbolos[idx], "procedimento nao pode ser usado em expressao");
+            }
             casar("(");
             if (!tokenEh(")")) {
                 parseExpressao();
@@ -890,6 +1099,10 @@ void parseFator(void)
                 }
             }
             casar(")");
+        }
+        else {
+            usarComoVariavel(idx, 0, linha);
+            usada[idx] = 1;
         }
     }
     else if (tokenAtual.type == TOKEN_NUM_INT) {
@@ -907,4 +1120,118 @@ void parseFator(void)
     else {
         erroSintatico(tokenAtual.lexema, "esperado um fator valido (identificador, numero, cadeia, 'verdadeiro', 'falso', '(' ou '-')");
     }
+}
+
+
+// Analisador semantico (Fase 2)
+// Tabela de simbolos = matriz tabelaSimbolos[][] + vetores paralelos
+// (ver README secao 6.1)
+
+// Declara o identificador da posicao idx da tabela.
+// Erro semantico se o nome ja tiver sido declarado (nome unico).
+// Variaveis e parametros recebem o proximo endereco livre;
+// procedimentos e funcoes nao ocupam memoria de dados (endereco -1).
+void declarar(int idx, Categoria cat, TipoBase tipo)
+{
+    if (declarada[idx]) {
+        erroSemantico(tabelaSimbolos[idx], "identificador declarado mais de uma vez");
+    }
+
+    declarada[idx] = 1;
+    categoria[idx] = cat;
+    tipoBase[idx]  = tipo;
+    atribuida[idx] = 0;
+    usada[idx]     = 0;
+
+    if (cat == CAT_VAR || cat == CAT_PARAM || cat == CAT_VETOR) {
+        endereco[idx] = proxEndereco;
+        proxEndereco++;
+    } else {
+        endereco[idx] = -1;
+    }
+}
+
+// Funcao pedida no enunciado: recebe o lexema do ID e devolve o
+// endereco da variavel. Se o identificador nao foi declarado,
+// gera erro semantico e encerra a compilacao.
+int busca_tabela_simbolos(char *id)
+{
+    int i;
+
+    for (i = 0; i < qtdSimbolos; i++) {
+        if (strcmp(tabelaSimbolos[i], id) == 0) {
+            if (!declarada[i]) {
+                break; // apareceu no texto, mas nunca foi declarado
+            }
+            return endereco[i];
+        }
+    }
+
+    erroSemantico(id, "identificador nao declarado");
+}
+
+// Devolve o proximo rotulo da geracao de codigo MEPA: 1, 2, 3...
+// Cuidado: como o parser e recursivo, guarde o retorno em variavel
+// local ANTES de chamar outras funcoes parse* (ver enunciado).
+int proximo_rotulo(void)
+{
+    static int contador = 0;
+
+    contador++;
+    return contador;
+}
+
+
+// Confere o uso de um identificador como VARIAVEL (lado esquerdo do
+// <-, leia, para ou dentro de expressao).
+//   temIndice = 1 quando aparece como nome[i]
+//   linha     = linha onde o identificador apareceu
+void usarComoVariavel(int idx, int temIndice, int linha)
+{
+    if (!declarada[idx]) {
+        erroSemanticoNaLinha(linha, tabelaSimbolos[idx], "identificador nao declarado");
+    }
+    if (categoria[idx] == CAT_PROC || categoria[idx] == CAT_FUNC) {
+        erroSemanticoNaLinha(linha, tabelaSimbolos[idx], "rotina usada como se fosse variavel");
+    }
+    if (temIndice && categoria[idx] != CAT_VETOR) {
+        erroSemanticoNaLinha(linha, tabelaSimbolos[idx], "indice usado em variavel que nao e vetor");
+    }
+    if (!temIndice && categoria[idx] == CAT_VETOR) {
+        erroSemanticoNaLinha(linha, tabelaSimbolos[idx], "vetor usado sem indice");
+    }
+}
+
+// Confere o uso de um identificador como chamada de ROTINA.
+void usarComoRotina(int idx, int linha)
+{
+    if (!declarada[idx]) {
+        erroSemanticoNaLinha(linha, tabelaSimbolos[idx], "rotina nao declarada");
+    }
+    if (categoria[idx] != CAT_PROC && categoria[idx] != CAT_FUNC) {
+        erroSemanticoNaLinha(linha, tabelaSimbolos[idx], "variavel usada como se fosse rotina");
+    }
+}
+
+// Registra a rotina antes de ler os parametros e o corpo (assim ela
+// pode chamar a si mesma) e marca-a como rotina em analise.
+void iniciarRotina(int idx, Categoria cat)
+{
+    declarar(idx, cat, T_NENHUM);  // funcao: tipo de retorno vem depois
+    qtdParams[idx] = 0;
+    rotinaAtual = idx;
+}
+
+// Fim da rotina: os parametros saem de escopo (podem ser reusados em
+// outra rotina ou como variavel global) e os enderecos que eles
+// ocuparam sao devolvidos.
+void encerrarRotina(int enderecoAntes)
+{
+    int i;
+
+    for (i = 0; i < qtdParams[rotinaAtual]; i++) {
+        declarada[paramsRotina[i]] = 0;
+    }
+    proxEndereco = enderecoAntes;
+    rotinaAtual = -1;
 }
