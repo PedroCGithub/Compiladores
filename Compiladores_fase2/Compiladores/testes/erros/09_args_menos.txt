@@ -1,0 +1,11 @@
+algoritmo "t"
+funcao f(a: inteiro, b: inteiro): inteiro
+inicio
+ retorne a + b
+fimfuncao
+var
+ r: inteiro
+inicio
+ r <- f(1)
+ escreval(r)
+fimalgoritmo

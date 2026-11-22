@@ -1,0 +1,32 @@
+1# KEYWORD | algoritmo
+1# STRING | "ContadorManual"
+2# KEYWORD | var
+3# ID | 0 (contador)
+3# SIMBOLO | :
+3# KEYWORD | inteiro
+4# KEYWORD | inicio
+5# ID | 0 (contador)
+5# SIMBOLO | <-
+5# NUM_INT | 1
+6# KEYWORD | enquanto
+6# SIMBOLO | (
+6# ID | 0 (contador)
+6# OP_REL | OP_LE
+6# NUM_INT | 5
+6# SIMBOLO | )
+6# KEYWORD | faca
+7# KEYWORD | escreval
+7# SIMBOLO | (
+7# STRING | "Valor atual: "
+AVISO | linha 7 | cadeia no escreva nao e impressa (IMPR da MEPA so imprime numero)
+7# SIMBOLO | ,
+7# ID | 0 (contador)
+7# SIMBOLO | )
+8# ID | 0 (contador)
+8# SIMBOLO | <-
+8# ID | 0 (contador)
+8# SIMBOLO | +
+8# NUM_INT | 1
+9# KEYWORD | fimenquanto
+10# KEYWORD | fimalgoritmo
+10# EOF | EOF

@@ -1,0 +1,17 @@
+algoritmo "Procedimentos"
+procedimento linha_decorativa
+  inicio
+    escreval("--------------------------")
+fimprocedimento
+
+procedimento mostrar_erro(mensagem: caractere)
+  inicio
+    escreval("[ERRO DO SISTEMA]: ", mensagem)
+fimprocedimento
+
+inicio
+  escreval("Cabeçalho do Sistema")
+  linha_decorativa
+  mostrar_erro("A conexão com a internet caiu.")
+  linha_decorativa
+fimalgoritmo

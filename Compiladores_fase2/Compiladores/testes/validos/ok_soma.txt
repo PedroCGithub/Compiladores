@@ -1,0 +1,8 @@
+algoritmo "Soma"
+var
+   a, b, c: inteiro
+inicio
+   leia(a, b)
+   c <- a + b * 2
+   escreval("resultado: ", c)
+fimalgoritmo

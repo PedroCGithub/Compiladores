@@ -1,0 +1,12 @@
+algoritmo "CadastroSimples"
+var
+  nome, sobrenome: caractere
+
+inicio
+  escreva("Digite seu primeiro nome: ")
+  leia(nome)
+  escreva("Digite seu sobrenome: ")
+  leia(sobrenome)
+  escreval("Nome completo registrado: ", nome, " ", sobrenome)
+
+fimalgoritmo

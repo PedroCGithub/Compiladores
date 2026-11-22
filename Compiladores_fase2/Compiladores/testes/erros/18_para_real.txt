@@ -1,0 +1,8 @@
+algoritmo "t"
+var
+ r: real
+inicio
+ para r de 1 ate 3 faca
+  escreval(r)
+ fimpara
+fimalgoritmo

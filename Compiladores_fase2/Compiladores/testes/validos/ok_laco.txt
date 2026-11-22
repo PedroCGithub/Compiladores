@@ -1,0 +1,22 @@
+algoritmo "Lacos"
+var
+   notas: vetor[1..4] de inteiro
+   soma, i, k: inteiro
+inicio
+   soma <- 0
+   para i de 1 ate 4 faca
+      leia(notas[i])
+      soma <- soma + notas[i]
+   fimpara
+   escreval("media: ", soma \ 4)
+   para i de 4 ate 1 passo -1 faca
+      escreva(notas[i])
+   fimpara
+   k <- 0
+   enquanto (k < 3) faca
+      k <- k + 1
+   fimenquanto
+   escreval(k)
+   notas[2] <- notas[1] * 10
+   escreval(notas[2])
+fimalgoritmo

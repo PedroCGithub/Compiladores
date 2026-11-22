@@ -1,0 +1,8 @@
+algoritmo "t"
+procedimento p
+inicio
+ retorne 1
+fimprocedimento
+inicio
+ p
+fimalgoritmo

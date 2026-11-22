@@ -1,0 +1,9 @@
+algoritmo "t"
+var
+ c: caractere
+ b: logico
+inicio
+ c <- "a"
+ b <- c < 3
+ escreval(b)
+fimalgoritmo

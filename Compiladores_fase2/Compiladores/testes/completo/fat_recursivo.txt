@@ -1,0 +1,46 @@
+algoritmo "Funcoes"
+funcao somar(a: inteiro, b: inteiro): inteiro
+inicio
+   retorne a + b
+fimfuncao
+funcao eh_par(v: inteiro): logico
+inicio
+   se (v MOD 2 = 0) entao
+      retorne verdadeiro
+   senao
+      retorne falso
+   fimse
+fimfuncao
+funcao fat(n: inteiro): inteiro
+inicio
+   se (n <= 1) entao
+      retorne 1
+   fimse
+   retorne n * fat(n - 1)
+fimfuncao
+procedimento mostrar(x: inteiro)
+inicio
+   escreval("valor: ", x)
+fimprocedimento
+procedimento linha
+inicio
+   escreval("----")
+fimprocedimento
+var
+   r, num: inteiro
+   par: logico
+inicio
+   linha
+   r <- somar(10, 5)
+   mostrar(r)
+   num <- 14
+   par <- eh_par(num)
+   se (par) entao
+      escreval(1)
+   senao
+      escreval(0)
+   fimse
+   escreval(eh_par(7))
+   mostrar(fat(5))
+   escreval(17 MOD 5, 17 \ 5)
+fimalgoritmo

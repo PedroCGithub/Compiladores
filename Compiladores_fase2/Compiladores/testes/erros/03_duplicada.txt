@@ -1,0 +1,6 @@
+algoritmo "t"
+var
+ x: inteiro
+ x: real
+inicio
+fimalgoritmo

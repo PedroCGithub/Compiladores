@@ -1,0 +1,8 @@
+algoritmo "t"
+var
+ x, y: inteiro
+inicio
+ x <- 1
+ y <- 2
+ escreval(y)
+fimalgoritmo

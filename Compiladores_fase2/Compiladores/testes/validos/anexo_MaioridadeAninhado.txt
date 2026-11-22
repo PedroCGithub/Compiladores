@@ -1,0 +1,19 @@
+algoritmo "MaioridadeAninhado"
+var
+  idade: inteiro
+
+inicio
+  escreva("Digite sua idade: ")
+  leia(idade)
+
+  se (idade >= 18) entao
+    escreval("Você é adulto.")
+  senao
+    se (idade >= 12) entao
+      escreval("Você é adolescente.")
+    senao
+      escreval("Você é criança.")
+    fimse
+  fimse
+
+fimalgoritmo

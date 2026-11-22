@@ -1,0 +1,9 @@
+algoritmo "t"
+var
+ r: real
+ x: inteiro
+inicio
+ r <- 2.0
+ x <- r MOD 2
+ escreval(x)
+fimalgoritmo

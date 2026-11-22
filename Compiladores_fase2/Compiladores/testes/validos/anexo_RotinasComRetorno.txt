@@ -1,0 +1,13 @@
+algoritmo "RotinasComRetorno"
+funcao somar(a: inteiro, b: inteiro): inteiro
+  inicio
+    retorne a + b // O processamento encerra aqui e devolve o valor
+fimfuncao
+
+var
+  resultado: inteiro
+
+inicio
+  resultado <- somar(10, 5)
+  escreval("O resultado retornado foi: ", resultado)
+fimalgoritmo

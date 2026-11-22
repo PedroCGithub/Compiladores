@@ -1,0 +1,18 @@
+     INPP
+     AMEM 1
+     CRCT 1
+     ARMZ contador
+L1: NADA
+     CRVL contador
+     CRCT 5
+     CMEG
+     DSVF L2
+     CRVL contador
+     IMPR
+     CRVL contador
+     CRCT 1
+     SOMA
+     ARMZ contador
+     DSVS L1
+L2: NADA
+     PARA

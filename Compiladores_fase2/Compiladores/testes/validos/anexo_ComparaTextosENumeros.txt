@@ -1,0 +1,16 @@
+algoritmo "ComparaTextosENumeros"
+var
+  senhaDigitada: inteiro
+  nome: caractere
+
+inicio
+  senhaDigitada <- 1234
+  nome <- "Ana"
+
+  // Comparar se é exatamente igual, usamos o sinal de igual (=)
+  // Para testar se os valores são diferentes, usamos <>
+
+  escreval("A senha está correta? ", senhaDigitada = 1234)
+  escreval("O usuário logado não é o João? ", nome <> "João")
+
+fimalgoritmo

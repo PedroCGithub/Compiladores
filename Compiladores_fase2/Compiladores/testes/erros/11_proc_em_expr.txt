@@ -1,0 +1,11 @@
+algoritmo "t"
+procedimento p
+inicio
+ escreval(1)
+fimprocedimento
+var
+ x: inteiro
+inicio
+ x <- p()
+ escreval(x)
+fimalgoritmo

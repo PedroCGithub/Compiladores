@@ -1,0 +1,13 @@
+algoritmo "ContadorManual"
+var
+  contador: inteiro
+
+inicio
+  contador <- 1
+
+  enquanto (contador <= 5) faca
+    escreval("Valor atual: ", contador)
+    contador <- contador + 1
+  fimenquanto
+
+fimalgoritmo

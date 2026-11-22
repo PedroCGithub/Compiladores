@@ -1,0 +1,15 @@
+algoritmo "nome_do_algoritmo"
+var
+    // Seção para declarar as variáveis
+    nome: caractere
+    idade: inteiro
+
+inicio
+   // Seção de comandos e lógica
+   escreva("Digite seu nome: ")
+   leia(nome)
+   escreva("Digite sua idade: ")
+   leia(idade)
+
+   escreva("Olá, ", nome, ". Você tem ", idade, " anos.")
+fimalgoritmo
