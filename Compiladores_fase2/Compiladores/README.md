@@ -1005,3 +1005,4 @@ Links que a professora disponibilizou no moodle de MEPA:
 Conforme exigido no enunciado, o grupo declara que usou o assistente
 Claude (Anthropic) na Fase 2:
     - Foi usado para estruturar uma TODO list do que precisava ser feito para concluirmos o enunciado da professora. Assim, saberiamos a ordem correta do que deveria ser realizado para o projeto funcionar corretamente.
+    - Compreensão melhor das instruções do MEPA e ajuda para a estruturação de como funcionaria, pois quando construímos o projeto, não havia ocorrido a segunda parte do conteúdo do MEPA que mostra como utilizar ele com diversos escopos.
