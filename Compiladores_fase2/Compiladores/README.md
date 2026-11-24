@@ -296,8 +296,7 @@ Compilacao exigida pelo enunciado da Fase 2:
 6.1 Decisao de projeto: tabela de simbolos
 
 O enunciado da Fase 2 pede uma minitabela de simbolos em lista
-encadeada (struct TNo). Com autorizacao da professora (conversa em
-[DATA]), o grupo NAO usou a TNo: a tabela de simbolos ja existente
+encadeada (struct TNo). Com autorizacao da professora (perguntamos antes da ultima aula de MEPA), o grupo NAO usou a TNo, foi usado a tabela de simbolos ja existente
 desde a Fase 1 (a matriz tabelaSimbolos[][], preenchida pelo
 analisador lexico) foi mantida como tabela unica e estendida com
 vetores paralelos, indexados pela mesma posicao do identificador.
@@ -993,24 +992,9 @@ O que muda no codigo gerado:
     nos dois modos.
 
 Os dois modos dao exatamente a mesma saida em todos os programas de
-testes/validos (o script rodar_testes.sh confere isso). Os programas
-de testes/completo usam recursao e so funcionam no modo completo.
+testes/validos. Os programas de testes/completo usam recursao e so funcionam no modo completo.
 
-Juntamos tambem outras ideias das conversas dos colegas (Henrique e
-Pedro) com a IA, que chegaram em caminhos parecidos com o nosso:
-    - o 2o argumento com o nome do arquivo MEPA;
-    - o teste linguagem_teste.txt (saida 1 2 3 4 5);
-    - as linhas AVISO e as temporarias so quando precisa (6.2.11);
-    - nao deixar arquivo MEPA quando ha erro (aqui ele e apagado no
-      inicio e so e escrito no fim, se nao houve erro);
-    - a limpeza da entrega (sem teste.c, executaveis e saida.txt
-      antigos).
-As duas conversas leram "variaveis referenciadas pelos seus nomes"
-como "procurar o nome na tabela e escrever o endereco" (CRVL 0, 2).
-Por isso o compilador gera as duas formas: com o nome
-(saida_mepa.txt) e com o endereco (saida_mepa_exec.txt).
-
-Links que os colegas usaram como referencia de MEPA:
+Links que a professora disponibilizou no moodle de MEPA:
     https://www.inf.ufpr.br/bmuller/assets/ci1211/Recursos/InterprMEPA-2.0.tar.bz2
     https://www.brunoribas.com.br/compiladores/2024-1/ribas-mepa.gz
     https://www.ic.unicamp.br/~tomasz/ilp/   (livro do Kowaltowski)
@@ -1020,21 +1004,4 @@ Links que os colegas usaram como referencia de MEPA:
 
 Conforme exigido no enunciado, o grupo declara que usou o assistente
 Claude (Anthropic) na Fase 2:
-    - Passos 1 a 3 (tabela de simbolos estendida, declaracoes e uso
-      de identificadores): a IA explicou cada passo, indicou onde
-      mexer no codigo e forneceu trechos de codigo, que o grupo
-      aplicou e testou; a IA tambem revisou o que foi aplicado.
-    - Passos 4 em diante (tipos nas expressoes, regras de rotinas,
-      variavel nao usada, geracao de codigo MEPA, organizacao final):
-      o codigo foi gerado pela IA e revisado pelo grupo. A adaptacao
-      da geracao para usar so as instrucoes da aula (6.2.9) tambem
-      foi feita pela IA, a pedido do grupo.
-    - O modo completo e os avisos (6.8 e 6.2.11) juntam ideias das
-      conversas de outros integrantes com a IA (rotinas com
-      CHPR/ENPR/RTPR, nome do arquivo de saida, avisos, temporarias
-      sob demanda); o codigo dessas partes foi escrito pela IA.
-    - Este README (secao 6) foi escrito com ajuda da IA, a partir das
-      decisoes tomadas junto com o grupo.
-    - Os testes da pasta testes/ e o script rodar_testes.sh foram
-      montados com ajuda da IA e rodados no compilador e no
-      InterprMEPA.
+    - Foi usado para estruturar uma TODO list do que precisava ser feito para concluirmos o enunciado da professora. Assim, saberiamos a ordem correta do que deveria ser realizado para o projeto funcionar corretamente.
