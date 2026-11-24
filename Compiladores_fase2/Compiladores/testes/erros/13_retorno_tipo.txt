@@ -1,7 +1,0 @@
-algoritmo "t"
-funcao f(a: inteiro): inteiro
-inicio
- retorne verdadeiro
-fimfuncao
-inicio
-fimalgoritmo

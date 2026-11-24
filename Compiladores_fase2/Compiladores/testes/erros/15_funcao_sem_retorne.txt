@@ -1,7 +1,0 @@
-algoritmo "t"
-funcao f(a: inteiro): inteiro
-inicio
- escreval(a)
-fimfuncao
-inicio
-fimalgoritmo

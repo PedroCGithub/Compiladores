@@ -1,8 +1,0 @@
-algoritmo "t"
-var
- v: vetor[1..3] de inteiro
- x: inteiro
-inicio
- x <- v
- escreval(x)
-fimalgoritmo
